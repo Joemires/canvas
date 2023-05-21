@@ -15,7 +15,7 @@ class TopicController extends Controller
 
     public function __construct()
     {
-        $this->model = app()->make(Tag::class);
+        $this->model = app()->make(Topic::class);
     }
 
     /**
