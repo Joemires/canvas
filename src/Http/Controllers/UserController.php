@@ -14,6 +14,13 @@ use Ramsey\Uuid\Uuid;
 
 class UserController extends Controller
 {
+    private $model;
+
+    public function __construct()
+    {
+        $this->model = app()->make(User::class);
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -22,7 +29,8 @@ class UserController extends Controller
     public function index(): JsonResponse
     {
         return response()->json(
-            User::query()
+            $this->model
+                ->query()
                 ->select('id', 'name', 'email', 'avatar', 'role')
                 ->latest()
                 ->withCount('posts')
@@ -37,9 +45,9 @@ class UserController extends Controller
      */
     public function create(): JsonResponse
     {
-        return response()->json(User::query()->make([
+        return response()->json($this->model->query()->make([
             'id' => Uuid::uuid4()->toString(),
-            'role' => User::CONTRIBUTOR,
+            'role' => $this->model->CONTRIBUTOR,
         ]), 200);
     }
 
@@ -54,10 +62,10 @@ class UserController extends Controller
     {
         $data = $request->validated();
 
-        $user = User::query()->find($id);
+        $user = $this->model->query()->find($id);
 
         if (! $user) {
-            if ($user = User::onlyTrashed()->firstWhere('email', $data['email'])) {
+            if ($user = $this->model->onlyTrashed()->firstWhere('email', $data['email'])) {
                 $user->restore();
 
                 return response()->json([
@@ -65,7 +73,7 @@ class UserController extends Controller
                     'i18n' => collect(trans('canvas::app', [], $user->locale))->toJson(),
                 ], 201);
             } else {
-                $user = new User([
+                $user = $this->model->fill([
                     'id' => $id,
                 ]);
             }
@@ -97,7 +105,7 @@ class UserController extends Controller
      */
     public function show($id): JsonResponse
     {
-        $user = User::query()->withCount('posts')->find($id);
+        $user = $this->model->query()->withCount('posts')->find($id);
 
         return $user ? response()->json($user, 200) : response()->json(null, 404);
     }
@@ -110,7 +118,7 @@ class UserController extends Controller
      */
     public function posts($id): JsonResponse
     {
-        $user = User::query()->with('posts')->find($id);
+        $user = $this->model->query()->with('posts')->find($id);
 
         return $user ? response()->json($user->posts()->withCount('views')->paginate(), 200) : response()->json(null, 200);
     }
@@ -130,7 +138,7 @@ class UserController extends Controller
             return response()->json(null, 403);
         }
 
-        $user = User::query()->findOrFail($id);
+        $user = $this->model->query()->findOrFail($id);
 
         $user->delete();
 

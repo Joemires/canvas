@@ -17,18 +17,19 @@ class StatsController extends Controller
      */
     public function __invoke(): JsonResponse
     {
-        $posts = Post::query()
-                     ->when(request()->query('scope', 'user') === 'all', function (Builder $query) {
-                         return $query;
-                     }, function (Builder $query) {
-                         return $query->where('user_id', request()->user('canvas')->id);
-                     })
-                     ->withCount('views', 'visits')
-                     ->published()
-                     ->latest()
-                     ->get();
+        $posts = app()->make(Post::class)
+                    ->query()
+                    ->when(request()->query('scope', 'user') === 'all', function (Builder $query) {
+                        return $query;
+                    }, function (Builder $query) {
+                        return $query->where('user_id', request()->user('canvas')->id);
+                    })
+                    ->withCount('views', 'visits')
+                    ->published()
+                    ->latest()
+                    ->get();
 
-        $stats = new StatsAggregator(request()->user('canvas'));
+        $stats = app()->make(StatsAggregator::class, ['user' => request()->user('canvas')]);
 
         $results = $stats->getStatsForPosts($posts, 30);
 

@@ -11,6 +11,13 @@ use Ramsey\Uuid\Uuid;
 
 class TagController extends Controller
 {
+    private $model;
+
+    public function __construct()
+    {
+        $this->model = app()->make(Tag::class);
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -19,7 +26,7 @@ class TagController extends Controller
     public function index(): JsonResponse
     {
         return response()->json(
-            Tag::query()
+            $this->model->query()
                ->select('id', 'name', 'created_at')
                ->latest()
                ->withCount('posts')
@@ -34,7 +41,7 @@ class TagController extends Controller
      */
     public function create(): JsonResponse
     {
-        return response()->json(Tag::query()->make([
+        return response()->json($this->model->query()->make([
             'id' => Uuid::uuid4()->toString(),
         ]), 200);
     }
@@ -50,10 +57,10 @@ class TagController extends Controller
     {
         $data = $request->validated();
 
-        $tag = Tag::query()->find($id);
+        $tag = $this->model->query()->find($id);
 
         if (! $tag) {
-            if ($tag = Tag::onlyTrashed()->firstWhere('slug', $data['slug'])) {
+            if ($tag = $this->model->onlyTrashed()->firstWhere('slug', $data['slug'])) {
                 $tag->restore();
 
                 return response()->json($tag->refresh(), 201);
@@ -79,7 +86,7 @@ class TagController extends Controller
      */
     public function show($id): JsonResponse
     {
-        $tag = Tag::query()->findOrFail($id);
+        $tag = $this->model->query()->findOrFail($id);
 
         return response()->json($tag, 200);
     }
@@ -92,7 +99,7 @@ class TagController extends Controller
      */
     public function posts($id): JsonResponse
     {
-        $tag = Tag::query()->with('posts')->findOrFail($id);
+        $tag = $this->model->query()->with('posts')->findOrFail($id);
 
         return response()->json($tag->posts()->withCount('views')->paginate(), 200);
     }
@@ -107,7 +114,7 @@ class TagController extends Controller
      */
     public function destroy($id)
     {
-        $tag = Tag::query()->findOrFail($id);
+        $tag = $this->model->query()->findOrFail($id);
 
         $tag->delete();
 
