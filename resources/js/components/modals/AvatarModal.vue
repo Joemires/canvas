@@ -107,8 +107,7 @@ export default {
 
         getServerOptions() {
             return {
-                // TODO: This check shouldn't need to be here
-                url: this.settings.path === '/' ? `/api/uploads` : `${this.settings.path}/api/uploads`,
+                url: this.settings.path !== '/' ? `${this.settings.path}/api/uploads` : '/api/uploads',
                 headers: {
                     'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]').content,
                 },

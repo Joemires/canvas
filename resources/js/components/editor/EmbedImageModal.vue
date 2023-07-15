@@ -233,7 +233,7 @@ export default {
 
         getServerOptions() {
             return {
-                url: `${this.settings.path}/api/uploads`,
+                url: this.settings.path !== '/' ? `${this.settings.path}/api/uploads` : '/api/uploads',
                 headers: {
                     'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]').content,
                 },

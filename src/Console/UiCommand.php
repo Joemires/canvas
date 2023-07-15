@@ -44,6 +44,7 @@ class UiCommand extends Command
                 'bootstrap' => '^4.6.0',
                 'highlight.js' => '^10.5.0',
                 'jquery' => '^3.5.1',
+                'laravel-mix' => '^6.0.49',
                 'medium-zoom' => '^1.0.6',
                 'moment' => '^2.29.1',
                 'nprogress' => '^0.2.0',
@@ -60,6 +61,13 @@ class UiCommand extends Command
             ] + $packages;
         });
 
+        $this->updateNodeScripts(function ($scripts) {
+            return [
+                'canvas.ui.dev' => 'mix',
+                'canvas.ui.prod' => 'mix --production',
+            ] + $scripts;
+        });
+
         // Sass configuration...
         copy(dirname(__DIR__, 2).'/resources/sass/ui.scss', resource_path('sass/canvas-ui.scss'));
 
@@ -70,7 +78,7 @@ class UiCommand extends Command
         $this->flushNodeModules();
 
         $this->info('Installation complete.');
-        $this->comment('Please run "npm install && npm run dev" to build your assets.');
+        $this->comment('Please run "npm install && npm run canvas.ui.dev" to build your assets.');
     }
 
     /**
@@ -87,6 +95,36 @@ class UiCommand extends Command
         }
 
         $configurationKey = $dev ? 'devDependencies' : 'dependencies';
+
+        $packages = json_decode(file_get_contents(base_path('package.json')), true);
+
+        $packages[$configurationKey] = $callback(
+            array_key_exists($configurationKey, $packages) ? $packages[$configurationKey] : [],
+            $configurationKey
+        );
+
+        ksort($packages[$configurationKey]);
+
+        file_put_contents(
+            base_path('package.json'),
+            json_encode($packages, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT).PHP_EOL
+        );
+    }
+
+    /**
+     * Update the "package.json" scripts.
+     *
+     * @param  callable  $callback
+     * @param  bool  $dev
+     * @return void
+     */
+    protected function updateNodeScripts(callable $callback)
+    {
+        if (! file_exists(base_path('package.json'))) {
+            return;
+        }
+
+        $configurationKey = 'scripts';
 
         $packages = json_decode(file_get_contents(base_path('package.json')), true);
 
